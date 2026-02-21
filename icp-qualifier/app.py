@@ -92,9 +92,17 @@ if df_input is not None and st.button("Run analysis", type="primary"):
             config.USE_SCREENSHOTS = False
             st.warning("Screenshots disabled on Streamlit Cloud (no browser support)")
 
+    progress_bar = st.progress(0, text="Initializing...")
+
+    def on_progress(current: int, total: int, msg: str):
+        if total > 0:
+            progress_bar.progress(current / total, text=f"{current}/{total} — {msg}")
+
     with st.spinner("Analyzing..."):
         from analyze import run_analysis
-        df_result = run_analysis(df_input, None)
+        df_result = run_analysis(df_input, None, progress_callback=on_progress)
+
+    progress_bar.empty()
 
     # Summary
     p = get_profile()

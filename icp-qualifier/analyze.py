@@ -1,6 +1,7 @@
 import asyncio
 import gc
 import logging
+from collections.abc import Callable
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -108,7 +109,11 @@ async def _process_one(
         return _map_result_to_columns(result, profile)
 
 
-async def _run_async(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.DataFrame:
+async def _run_async(
+    df: pd.DataFrame,
+    existing: pd.DataFrame | None,
+    progress_callback: Callable[[int, int, str], None] | None = None,
+) -> pd.DataFrame:
     prompt_template = load_prompt()
     profile = get_profile()
     result_cols = get_result_columns()
@@ -152,12 +157,18 @@ async def _run_async(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.Data
         print("Nothing to process.")
         return df
 
+    total = len(tasks_info)
+    if progress_callback:
+        progress_callback(0, total, "Initializing...")
+
     semaphore = asyncio.Semaphore(config.WORKERS)
 
     browser = None
     pw_instance = None
 
     if config.USE_SCREENSHOTS or (config.JINA_FALLBACK_PLAYWRIGHT and not config.USE_SCREENSHOTS):
+        if progress_callback:
+            progress_callback(0, total, "Launching browser...")
         logger.info("Launching Playwright Chromium (headless)")
         from playwright.async_api import async_playwright
         pw_instance = await async_playwright().start()
@@ -176,6 +187,8 @@ async def _run_async(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.Data
         )
 
     try:
+        if progress_callback:
+            progress_callback(0, total, "Starting analysis...")
         async with httpx.AsyncClient(
             limits=httpx.Limits(max_connections=config.WORKERS + 2, max_keepalive_connections=2),
         ) as http_client:
@@ -221,6 +234,8 @@ async def _run_async(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.Data
                 df.to_csv(config.OUTPUT_FILE, index=False)
                 logger.debug("Saved progress: %s -> %s", company_name, res.get("status", ""))
                 pbar.update(1)
+                if progress_callback:
+                    progress_callback(pbar.n, total, f"{company_name} — {res.get('status', 'ok')}")
                 if pbar.n % 15 == 0 and pbar.n > 0:
                     gc.collect()
 
@@ -250,5 +265,9 @@ async def _run_async(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.Data
     return df
 
 
-def run_analysis(df: pd.DataFrame, existing: pd.DataFrame | None) -> pd.DataFrame:
-    return asyncio.run(_run_async(df, existing))
+def run_analysis(
+    df: pd.DataFrame,
+    existing: pd.DataFrame | None,
+    progress_callback: Callable[[int, int, str], None] | None = None,
+) -> pd.DataFrame:
+    return asyncio.run(_run_async(df, existing, progress_callback))
