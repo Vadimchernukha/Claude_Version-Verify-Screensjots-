@@ -4,6 +4,7 @@ Run: streamlit run app.py
 """
 
 import io
+import os
 import sys
 from pathlib import Path
 
@@ -12,6 +13,14 @@ import streamlit as st
 
 # Ensure project root is in path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# Inject Streamlit Secrets into env (for Streamlit Cloud)
+try:
+    for key in ("ANTHROPIC_API_KEY", "JINA_API_KEY"):
+        if key not in os.environ and key in st.secrets:
+            os.environ[key] = str(st.secrets[key])
+except Exception:
+    pass
 
 from config import config
 from profiles import get_profile, get_result_columns
