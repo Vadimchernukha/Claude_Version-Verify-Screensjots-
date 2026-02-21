@@ -85,6 +85,13 @@ if df_input is not None and st.button("Run analysis", type="primary"):
     config.PROFILE = profile
     config.USE_SCREENSHOTS = use_screenshots
 
+    # Streamlit Cloud has no browser — disable Playwright
+    if "/mount/src" in str(Path(__file__).resolve()):
+        config.JINA_FALLBACK_PLAYWRIGHT = False
+        if use_screenshots:
+            config.USE_SCREENSHOTS = False
+            st.warning("Screenshots disabled on Streamlit Cloud (no browser support)")
+
     with st.spinner("Analyzing..."):
         from analyze import run_analysis
         df_result = run_analysis(df_input, None)
