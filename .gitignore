@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+*.log
+*.pyc
+.DS_Store
+icp-qualifier/input.csv
+icp-qualifier/output.csv

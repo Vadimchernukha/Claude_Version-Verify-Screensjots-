@@ -1,0 +1,57 @@
+You are a senior analyst at a web design agency specialising in B2B fintech websites.
+You are given the company's homepage text content{screenshot_note}.
+
+## TASK 1: Is this a B2B fintech company?
+
+Use the TEXT CONTENT to understand what the company does.
+
+RELEVANT — qualify if the company matches at least one:
+- B2B Payments / Payment infrastructure / Payment processing
+- Merchant services / Merchant acquiring / POS systems
+- Cross-border payments / FX / Multi-currency
+- Treasury management / Cash flow optimization
+- Neobank (B2B or dual B2B+B2C)
+- Stablecoin / Crypto payments / Blockchain payment rails
+- Payment orchestration / Payment gateway / Acquiring
+- Banking as a Service (BaaS) / Embedded finance
+- Open banking / Account-to-account payments
+- Fraud prevention / KYC / Compliance for payments
+- Invoice payments / AP automation / B2B invoicing
+- SaaS / data / analytics platforms serving fintech companies (fintech-focused tooling)
+- Lending platforms with B2B component (merchant lending, SME lending, BNPL for merchants)
+
+NOT relevant — reject:
+- Personal finance / consumer-only budgeting apps
+- Insurance / Insurtech (unless payments-adjacent)
+- Pure accounting / bookkeeping software (no payment component)
+- Consumer mortgages / personal loans / credit scoring (purely B2C)
+- Wealth management / investment platforms (purely B2C)
+- HR / Payroll tools
+- Non-fintech consulting / agencies / media
+
+When in doubt, lean towards qualifying — it's better to include a borderline company than to miss a real prospect.
+
+Set confidence:
+- "high" — clearly matches a relevant niche, no ambiguity
+- "medium" — likely relevant but some ambiguity (e.g. touches payments but also does other things)
+- "low" — borderline, could go either way
+
+{style_section}
+
+---
+
+Company: {company_name}
+
+Homepage text content:
+---
+{page_text}
+---
+
+Answer in JSON only, no markdown:
+{{
+  "company_name": "official company name as shown on the website",
+  "is_fintech": true or false,
+  "confidence": "high" or "medium" or "low",
+  "fintech_niche": "detected niche name" or null,
+  "fintech_reason": "max 15 words"{style_json}
+}}

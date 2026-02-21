@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.log
+input.csv
+output.csv
