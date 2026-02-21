@@ -14,7 +14,7 @@ from profiles import get_result_columns, get_profile
 from prompts import load_prompt
 from utils import (
     fetch_page_async, fetch_page_playwright_async, take_screenshot_async, call_claude_async,
-    safe_str,
+    preprocess_page_text, safe_str,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +92,9 @@ async def _process_one(
         if page_text is None and screenshot_b64 is None:
             return {"status": "unreachable", "analyzed_at": datetime.now(timezone.utc).isoformat()}
 
+        if page_text is not None:
+            page_text = preprocess_page_text(page_text, max_chars=config.PROCESSED_TEXT_LIMIT)
+
         prompt = prompt_template.format(
             company_name=company_name,
             page_text=page_text or "(text not available — use the screenshot only)",
@@ -99,6 +102,13 @@ async def _process_one(
 
         result = await call_claude_async(claude_client, prompt, screenshot_b64=screenshot_b64)
         del screenshot_b64
+
+        if result is not None and result.get("confidence") == "low":
+            retry_result = await call_claude_async(
+                claude_client, prompt, model=config.FALLBACK_MODEL
+            )
+            if retry_result is not None:
+                result = retry_result
 
         if result is None:
             return {

@@ -26,8 +26,11 @@ class Config:
     JINA_TIMEOUT: int = 25
     JINA_RETRIES: int = 3
     JINA_MIN_LENGTH: int = 100
-    PAGE_TEXT_LIMIT: int = 4000
+    PAGE_TEXT_LIMIT: int = 6000
+    PROCESSED_TEXT_LIMIT: int = 1500
     JINA_FALLBACK_PLAYWRIGHT: bool = True
+
+    FALLBACK_MODEL: str = "claude-sonnet-4-6"
 
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     LOG_FILE: str = str(PROJECT_DIR / "icp-qualifier.log")

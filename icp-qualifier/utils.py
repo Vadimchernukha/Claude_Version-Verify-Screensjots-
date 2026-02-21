@@ -11,6 +11,35 @@ from config import config
 
 logger = logging.getLogger(__name__)
 
+SIGNAL_WORDS = frozenset(
+    "payment fintech saas platform api dashboard pricing b2b product subscription app integration demo".split()
+)
+
+
+def preprocess_page_text(raw_text: str, max_chars: int = 1500) -> str:
+    """Clean page text, filter paragraphs, prioritize signal words, truncate."""
+    if not raw_text or not raw_text.strip():
+        return ""
+    text = raw_text.strip()
+    # Remove junk: cookie banners, privacy policy, URLs, markdown links, excess newlines
+    text = re.sub(r"(?i)(cookie\s*policy|privacy\s*policy|terms\s*of\s*service|accept\s*cookies|we\s*use\s*cookies)[^.]*\.?", "", text)
+    text = re.sub(r"https?://[^\s]+", "", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n +", "\n", text).strip()
+    # Split into paragraphs, keep len > 40
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip() and len(p.strip()) > 40]
+    if not paragraphs:
+        return text[:max_chars] if text else ""
+    # Prioritize paragraphs with signal words
+    def _score(p: str) -> int:
+        words = set(re.findall(r"\b\w+\b", p.lower()))
+        return sum(1 for w in words if w in SIGNAL_WORDS)
+    paragraphs.sort(key=lambda p: -_score(p))
+    out = "\n\n".join(paragraphs)
+    return out[:max_chars]
+
 
 async def fetch_page_async(website: str, http_client: httpx.AsyncClient) -> str | None:
     if not website:
@@ -76,6 +105,7 @@ async def call_claude_async(
     client: anthropic.AsyncAnthropic,
     prompt: str,
     screenshot_b64: str | None = None,
+    model: str | None = None,
 ) -> dict | None:
     content = []
     if screenshot_b64:
@@ -89,11 +119,12 @@ async def call_claude_async(
         })
     content.append({"type": "text", "text": prompt})
 
+    model = model or config.MODEL
     for attempt in range(config.MAX_RETRIES):
         try:
             response = await client.messages.create(
-                model=config.MODEL,
-                max_tokens=1024,
+                model=model,
+                max_tokens=300,
                 messages=[{"role": "user", "content": content}],
             )
             out = parse_json_response(response)
