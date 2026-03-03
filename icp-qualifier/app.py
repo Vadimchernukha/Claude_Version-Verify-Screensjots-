@@ -34,10 +34,43 @@ st.caption("Qualify companies by profile (fintech, software product)")
 with st.sidebar:
     profile = st.selectbox(
         "Profile",
-        options=["software_product", "fintech"],
-        format_func=lambda x: "Software Product" if x == "software_product" else "Fintech",
+        options=["software_product", "fintech", "lionwood"],
+        format_func=lambda x: {"software_product": "Software Product", "fintech": "Fintech", "lionwood": "Lionwood ICP"}.get(x, x),
     )
     use_screenshots = st.checkbox("Use screenshots", value=False, help="Slower, more tokens, better design classification (fintech only)")
+    st.divider()
+    st.subheader("Cache")
+    use_cache = st.checkbox("Use cache", value=True, help="Skip already analyzed companies across sessions")
+    from cache import CompanyCache
+    _cache = CompanyCache()
+    _s = _cache.stats()
+    st.caption(f"Records: {_s['total']} | Oldest: {_s['oldest'][:10] if _s['oldest'] else '-'} | Newest: {_s['newest'][:10] if _s['newest'] else '-'}")
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as _tmp:
+        _export_path = _tmp.name
+    _cache.export_to_csv(_export_path)
+    try:
+        with open(_export_path, "rb") as _f:
+            _export_data = _f.read()
+        st.download_button("Export cache", _export_data, "cache_export.csv", "text/csv", key="export_cache")
+    finally:
+        os.unlink(_export_path)
+    _imported = st.file_uploader("Import cache", type=["csv"], key="import_cache")
+    if _imported:
+        _content = _imported.read()
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as _tmp:
+            _tmp.write(_content)
+            _import_path = _tmp.name
+        try:
+            _n = _cache.import_from_csv(_import_path)
+            st.success(f"Imported {_n} records")
+        finally:
+            os.unlink(_import_path)
+    _confirm_clear = st.checkbox("Confirm clear", value=False, key="confirm_clear")
+    if st.button("Clear cache", disabled=not _confirm_clear, key="clear_cache") and _confirm_clear:
+        _cache.clear()
+        st.success("Cache cleared")
+        st.rerun()
     st.divider()
     st.caption("Input: CSV or domains (one per line)")
 
@@ -84,6 +117,7 @@ if df_input is not None and st.button("Run analysis", type="primary"):
 
     config.PROFILE = profile
     config.USE_SCREENSHOTS = use_screenshots
+    config.USE_CACHE = use_cache
 
     # Streamlit Cloud has no browser — disable Playwright
     if "/mount/src" in str(Path(__file__).resolve()):

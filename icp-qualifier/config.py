@@ -14,7 +14,7 @@ class Config:
     JINA_API_KEY: str = os.getenv("JINA_API_KEY", "")
 
     MODEL: str = "claude-haiku-4-5"
-    PROFILE: str = "software_product"
+    PROFILE: str = "lionwood"
     USE_SCREENSHOTS: bool = False
     INPUT_FILE: str = str(PROJECT_DIR / "input.csv")
     OUTPUT_FILE: str = str(PROJECT_DIR / "output.csv")
@@ -31,6 +31,10 @@ class Config:
     JINA_FALLBACK_PLAYWRIGHT: bool = True
 
     FALLBACK_MODEL: str = "claude-sonnet-4-6"
+
+    USE_CACHE: bool = True
+    CACHE_FILE: str = str(PROJECT_DIR / "cache.db")
+    CACHE_EXPORT_FILE: str = str(PROJECT_DIR / "cache_export.csv")
 
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     LOG_FILE: str = str(PROJECT_DIR / "icp-qualifier.log")

@@ -16,6 +16,7 @@ from utils import (
     fetch_page_async, fetch_page_playwright_async, take_screenshot_async, call_claude_async,
     preprocess_page_text, safe_str,
 )
+from cache import CompanyCache, get_prompt_version
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,23 @@ def _map_result_to_columns(result: dict, profile: dict) -> dict:
         if "website_style" in cols:
             raw = result.get("website_style", "")
             res["website_style"] = raw if raw in VALID_STYLES else "Mixed"
+    elif profile["qualify_key"] == "is_icp_match":
+        def _clean(s):
+            if s is None:
+                return ""
+            s = str(s).strip()
+            if s.lower() in ("none", "null"):
+                return ""
+            for prefix in ("None — ", "none — "):
+                if s.startswith(prefix):
+                    s = s[len(prefix):].strip()
+            return s
+        res["is_icp_match"] = result.get("is_icp_match", False)
+        res["confidence"] = result.get("confidence", "low")
+        res["company_type"] = _clean(result.get("company_type"))
+        res["geography_detected"] = _clean(result.get("geography_detected"))
+        res["revenue_signal"] = _clean(result.get("revenue_signal"))
+        res["reason"] = _clean(result.get("reason"))
     else:
         res["has_product"] = result.get("has_product", False)
         res["confidence"] = result.get("confidence", "low")
@@ -56,6 +74,29 @@ def _map_result_to_columns(result: dict, profile: dict) -> dict:
     return res
 
 
+def _cache_to_result(cached: dict, profile: dict) -> dict:
+    """Map cached neutral fields to profile-specific output format."""
+    base = {
+        "company_name": cached.get("company_name", ""),
+        "confidence": "medium",
+        "fintech_reason": "",
+        "reason": "",
+    }
+    if profile["qualify_key"] == "is_fintech":
+        base["is_fintech"] = cached.get("is_fintech", False)
+        base["fintech_niche"] = cached.get("fintech_niche", "")
+        base["website_style"] = "Mixed"
+    elif profile["qualify_key"] == "is_icp_match":
+        base["is_icp_match"] = cached.get("is_icp_match", False)
+        base["company_type"] = cached.get("company_type", "")
+        base["geography_detected"] = cached.get("geography_detected", "")
+        base["revenue_signal"] = cached.get("revenue_signal", "")
+    else:
+        base["has_product"] = cached.get("has_product", False)
+        base["product_type"] = cached.get("product_type", "")
+    return _map_result_to_columns(base, profile)
+
+
 async def _process_one(
     company_name: str,
     website: str,
@@ -66,6 +107,12 @@ async def _process_one(
     browser,
     semaphore: asyncio.Semaphore,
 ) -> dict:
+    if config.USE_CACHE:
+        prompt_version = get_prompt_version(config.PROFILE)
+        cached = CompanyCache().get(website, prompt_version)
+        if cached is not None:
+            return _cache_to_result(cached, profile)
+
     async with semaphore:
         full_url = _normalize_url(website)
 
@@ -116,7 +163,15 @@ async def _process_one(
                 "analyzed_at": datetime.now(timezone.utc).isoformat(),
             }
 
-        return _map_result_to_columns(result, profile)
+        mapped = _map_result_to_columns(result, profile)
+        if config.USE_CACHE:
+            CompanyCache().set(
+                website,
+                {**result, "Company Name": result.get("company_name", "")},
+                raw_page_text=page_text or "",
+                prompt_version=get_prompt_version(config.PROFILE),
+            )
+        return mapped
 
 
 async def _run_async(
@@ -127,11 +182,23 @@ async def _run_async(
     prompt_template = load_prompt()
     profile = get_profile()
     result_cols = get_result_columns()
+    qualify_key = profile["qualify_key"]
+    qualify_label = profile["qualify_label"]
     claude_client = anthropic.AsyncAnthropic(api_key=config.ANTHROPIC_API_KEY)
 
     already_done: set[str] = set()
     if existing is not None and "status" in existing.columns and "Website" in existing.columns:
-        done_mask = existing["status"].notna() & (existing["status"] != "")
+        status_ok = existing["status"].notna() & (existing["status"] != "")
+        unreachable_or_error = status_ok & existing["status"].isin(["unreachable", "error"])
+        if qualify_key in existing.columns:
+            analyzed_with_result = (
+                status_ok & (existing["status"] == "analyzed")
+                & existing[qualify_key].notna()
+                & (existing[qualify_key].astype(str).str.strip() != "")
+            )
+            done_mask = unreachable_or_error | analyzed_with_result
+        else:
+            done_mask = unreachable_or_error
         already_done = set(existing.loc[done_mask, "Website"].astype(str).str.strip().str.lower())
         logger.info("Resume: %d companies already done (by Website)", len(already_done))
 
@@ -140,8 +207,6 @@ async def _run_async(
             df[col] = ""
 
     has_website = df[df["Website"].str.strip() != ""]
-    qualify_key = profile["qualify_key"]
-    qualify_label = profile["qualify_label"]
     stats = {"qualified": 0, "not_qualified": 0, "Legacy": 0, "Mixed": 0, "Modern": 0, "unreachable": 0, "error": 0}
 
     tasks_info = []
@@ -149,7 +214,7 @@ async def _run_async(
         company_name = safe_str(row.get("Company Name"))
         website = safe_str(row.get("Website"))
         website_key = website.lower().strip() if website else ""
-        if website_key in already_done or safe_str(df.at[idx, "status"]):
+        if website_key in already_done:
             continue
         tasks_info.append((idx, company_name, website))
 
@@ -225,6 +290,8 @@ async def _run_async(
                     conf = res.get("confidence", "")
                     if qualify_key == "is_fintech":
                         niche = res.get("fintech_niche", "")
+                    elif qualify_key == "is_icp_match":
+                        niche = res.get("company_type", "")
                     else:
                         niche = res.get("product_type", "")
                     ft_icon = "✅" if is_ok else "❌"

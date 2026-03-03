@@ -1,5 +1,7 @@
 .env
 __pycache__/
 *.log
+cache.db
+cache_export.csv
 input.csv
 output.csv

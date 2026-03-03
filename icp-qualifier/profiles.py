@@ -17,11 +17,19 @@ PROFILES = {
     },
     "software_product": {
         "columns": ["status", "has_product", "confidence", "product_type", "reason", "analyzed_at"],
-        "columns_with_style": ["status", "has_product", "confidence", "product_type", "reason", "analyzed_at"],  # no style
+        "columns_with_style": ["status", "has_product", "confidence", "product_type", "reason", "analyzed_at"],
         "qualify_key": "has_product",
         "qualify_label": "has product",
         "has_style": False,
         "json_map": {"has_product", "product_type", "reason"},
+    },
+    "lionwood": {
+        "columns": ["status", "is_icp_match", "confidence", "company_type", "geography_detected", "revenue_signal", "reason", "analyzed_at"],
+        "columns_with_style": ["status", "is_icp_match", "confidence", "company_type", "geography_detected", "revenue_signal", "reason", "analyzed_at"],
+        "qualify_key": "is_icp_match",
+        "qualify_label": "ICP match",
+        "has_style": False,
+        "json_map": {"is_icp_match", "company_type", "geography_detected", "revenue_signal", "reason"},
     },
 }
 
