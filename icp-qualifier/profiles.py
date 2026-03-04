@@ -31,6 +31,14 @@ PROFILES = {
         "has_style": False,
         "json_map": {"is_icp_match", "company_type", "geography_detected", "revenue_signal", "reason"},
     },
+    "enterprise": {
+        "columns": ["status", "is_enterprise_match", "confidence", "company_type", "rejection_reason", "reason", "analyzed_at"],
+        "columns_with_style": ["status", "is_enterprise_match", "confidence", "company_type", "rejection_reason", "reason", "analyzed_at"],
+        "qualify_key": "is_enterprise_match",
+        "qualify_label": "enterprise match",
+        "has_style": False,
+        "json_map": {"is_enterprise_match", "company_type", "rejection_reason", "reason"},
+    },
 }
 
 

@@ -45,6 +45,17 @@ def _map_result_to_columns(result: dict, profile: dict) -> dict:
         if "website_style" in cols:
             raw = result.get("website_style", "")
             res["website_style"] = raw if raw in VALID_STYLES else "Mixed"
+    elif profile["qualify_key"] == "is_enterprise_match":
+        def _s(v):
+            if v is None:
+                return ""
+            v = str(v).strip()
+            return "" if v.lower() in ("none", "null") else v
+        res["is_enterprise_match"] = result.get("is_enterprise_match", False)
+        res["confidence"] = result.get("confidence", "low")
+        res["company_type"] = _s(result.get("company_type"))
+        res["rejection_reason"] = _s(result.get("rejection_reason"))
+        res["reason"] = _s(result.get("reason"))
     elif profile["qualify_key"] == "is_icp_match":
         def _clean(s):
             if s is None:
@@ -86,6 +97,10 @@ def _cache_to_result(cached: dict, profile: dict) -> dict:
         base["is_fintech"] = cached.get("is_fintech", False)
         base["fintech_niche"] = cached.get("fintech_niche", "")
         base["website_style"] = "Mixed"
+    elif profile["qualify_key"] == "is_enterprise_match":
+        base["is_enterprise_match"] = cached.get("is_enterprise_match", False)
+        base["company_type"] = cached.get("company_type", "")
+        base["rejection_reason"] = cached.get("rejection_reason", "")
     elif profile["qualify_key"] == "is_icp_match":
         base["is_icp_match"] = cached.get("is_icp_match", False)
         base["company_type"] = cached.get("company_type", "")
@@ -290,7 +305,7 @@ async def _run_async(
                     conf = res.get("confidence", "")
                     if qualify_key == "is_fintech":
                         niche = res.get("fintech_niche", "")
-                    elif qualify_key == "is_icp_match":
+                    elif qualify_key in ("is_icp_match", "is_enterprise_match"):
                         niche = res.get("company_type", "")
                     else:
                         niche = res.get("product_type", "")

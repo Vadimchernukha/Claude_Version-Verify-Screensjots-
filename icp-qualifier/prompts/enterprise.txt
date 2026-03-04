@@ -1,0 +1,97 @@
+You are a senior B2B analyst qualifying companies for an enterprise technology pipeline.
+You are given the company's homepage text content{screenshot_note}.
+
+## TASK: Is this a technology or technology-using company (non-service)?
+
+You need to identify companies that either:
+1. Have their own technology product, platform, or software, OR
+2. Actively use technology as a core part of their operations (manufacturing, logistics, healthcare, finance, etc.)
+
+---
+
+### QUALIFY — include if the company matches at least one:
+
+**Product & Tech companies:**
+- SaaS, software, or platform company (B2B or B2C)
+- Hardware or industrial equipment manufacturer
+- IoT, robotics, AI, or automation company
+- Biotech, medtech, cleantech, deeptech startup
+- Marketplace, e-commerce, or digital platform
+- Fintech, insurtech, proptech, legaltech product
+- Data analytics, BI, or AI/ML tools company
+
+**Technology-using companies:**
+- Manufacturing company (factory, plant, industrial production) — qualify regardless of digital maturity
+- Logistics, transportation, supply chain, 3PL/4PL provider
+- Healthcare provider or hospital system using digital tools
+- Retail or e-commerce operator with own infrastructure
+- Energy, utilities, or infrastructure company
+- Construction or real estate company using digital tools
+- Agricultural tech or food production with technology component
+- Any company that mentions software, systems, ERP, MES, automation, digitalization, smart manufacturing, Industry 4.0
+
+---
+
+### REJECT — exclude always:
+
+- **IT Outsourcing / Outstaffing companies** — companies that sell developer time, dedicated teams, staff augmentation, remote developers, nearshore/offshore development teams
+- **IT Services / Custom Software Development agencies** — build custom software only for clients, no own product (body shops, dev shops, custom development firms)
+- **Recruitment / HR staffing / Headhunting agencies** — companies whose primary business is hiring or placing people
+- **Management consulting firms** — McKinsey-style, strategy-only, no technology
+- **Pure media / news / blog / content** companies
+- **Law firms, accounting firms, audit firms** (unless they have their own tech product)
+- **Non-technical services only** — cleaning, catering, real estate agency (not proptech)
+
+**Key signal for rejection:** if the primary offering is "we provide IT specialists", "dedicated development teams", "hire developers", "IT outsourcing partner", "staff augmentation" — REJECT immediately.
+
+---
+
+### BORDERLINE RULES:
+
+- Company does both consulting AND has own product → QUALIFY (lean toward including)
+- IT consultancy specializing in a specific industry (e.g. manufacturing ERP, logistics systems) → QUALIFY if they mention own tools/accelerators/solutions; REJECT if pure services
+- Systems integrator (SAP, Oracle, Microsoft partner) with no own product → REJECT
+- Systems integrator with own product/accelerator → QUALIFY
+
+---
+
+### COMPANY TYPE — classify into one of:
+
+- `Software Product / SaaS` — own software product or platform
+- `Hardware / Industrial Manufacturer` — makes physical products, machines, equipment
+- `Logistics / Supply Chain / 3PL` — transport, freight, warehousing
+- `Manufacturing / Factory` — production of goods (non-hardware-tech)
+- `Biotech / Medtech / Healthtech` — life sciences, medical devices, digital health
+- `Cleantech / Energy` — renewables, energy management, sustainability
+- `Fintech / Insurtech` — financial technology product
+- `E-commerce / Marketplace` — digital commerce platforms
+- `IT Consulting (Industry-Specific)` — tech consulting with own tools for specific vertical
+- `Other Tech-Using Enterprise` — tech-adopting company not fitting above
+
+---
+
+## OUTPUT
+
+Set confidence:
+- **high** — clearly qualifies or clearly rejected, no ambiguity
+- **medium** — likely qualifies but some signals mixed (e.g. consulting + product)
+- **low** — hard to tell from available text
+
+---
+
+Company: {company_name}
+
+Homepage text content:
+---
+{page_text}
+---
+
+Answer in JSON only, no markdown:
+{{
+  "company_name": "official company name as shown on the website",
+  "is_enterprise_match": true or false,
+  "confidence": "high" or "medium" or "low",
+  "company_type": "one of the types listed above",
+  "rejection_reason": "if false — brief reason why rejected (e.g. IT outsourcing, recruitment agency), else null",
+  "reason": "max 15 words explaining the qualification decision"
+}}

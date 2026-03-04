@@ -34,8 +34,8 @@ st.caption("Qualify companies by profile (fintech, software product)")
 with st.sidebar:
     profile = st.selectbox(
         "Profile",
-        options=["software_product", "fintech", "lionwood"],
-        format_func=lambda x: {"software_product": "Software Product", "fintech": "Fintech", "lionwood": "Lionwood ICP"}.get(x, x),
+        options=["software_product", "fintech", "lionwood", "enterprise"],
+        format_func=lambda x: {"software_product": "Software Product", "fintech": "Fintech", "lionwood": "Lionwood ICP", "enterprise": "Enterprise"}.get(x, x),
     )
     use_screenshots = st.checkbox("Use screenshots", value=False, help="Slower, more tokens, better design classification (fintech only)")
     st.divider()
