@@ -15,6 +15,8 @@ CACHE_COLUMNS = [
     "website", "company_name", "description", "industry",
     "has_product", "is_fintech", "product_type", "fintech_niche",
     "is_icp_match", "company_type", "geography_detected", "revenue_signal",
+    "icp_match", "agency_type", "team_size", "size_signal", "sales_signal",
+    "clutch_presence", "target_markets", "tech_stack", "outreach_score",
     "raw_page_text", "cached_at", "prompt_version",
 ]
 
@@ -54,6 +56,15 @@ def _extract_neutral(data: dict) -> dict:
         "company_type": str(data.get("company_type", "")).strip(),
         "geography_detected": str(data.get("geography_detected", "")).strip(),
         "revenue_signal": str(data.get("revenue_signal", "")).strip(),
+        "icp_match": _bool(data.get("icp_match", False)),
+        "agency_type": str(data.get("agency_type", "")).strip(),
+        "team_size": str(data.get("team_size", "")).strip(),
+        "size_signal": str(data.get("size_signal", "")).strip(),
+        "sales_signal": str(data.get("sales_signal", "")).strip(),
+        "clutch_presence": _bool(data.get("clutch_presence", False)),
+        "target_markets": str(data.get("target_markets", "")).strip(),
+        "tech_stack": str(data.get("tech_stack", "")).strip(),
+        "outreach_score": str(data.get("outreach_score", "")).strip(),
     }
     return out
 
@@ -84,7 +95,14 @@ class CompanyCache:
                 prompt_version TEXT
             )
         """)
-        for col, ctype in [("is_icp_match", "INTEGER"), ("company_type", "TEXT"), ("geography_detected", "TEXT"), ("revenue_signal", "TEXT")]:
+        for col, ctype in [
+            ("is_icp_match", "INTEGER"), ("company_type", "TEXT"),
+            ("geography_detected", "TEXT"), ("revenue_signal", "TEXT"),
+            ("icp_match", "INTEGER"), ("agency_type", "TEXT"),
+            ("team_size", "TEXT"), ("size_signal", "TEXT"), ("sales_signal", "TEXT"),
+            ("clutch_presence", "INTEGER"), ("target_markets", "TEXT"),
+            ("tech_stack", "TEXT"), ("outreach_score", "TEXT"),
+        ]:
             try:
                 conn.execute(f"ALTER TABLE company_cache ADD COLUMN {col} {ctype}")
             except sqlite3.OperationalError:
@@ -101,12 +119,14 @@ class CompanyCache:
                 row = conn.execute(
                     "SELECT company_name, description, industry, has_product, is_fintech, "
                     "product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal, "
+                    "icp_match, agency_type, team_size, size_signal, sales_signal, "
+                    "clutch_presence, target_markets, tech_stack, outreach_score, "
                     "raw_page_text, cached_at, prompt_version FROM company_cache WHERE website = ?",
                     (key,),
                 ).fetchone()
                 if not row:
                     return None
-                if row[13] != prompt_version:
+                if row[22] != prompt_version:
                     return None
                 return {
                     "website": key,
@@ -121,9 +141,18 @@ class CompanyCache:
                     "company_type": row[8] or "",
                     "geography_detected": row[9] or "",
                     "revenue_signal": row[10] or "",
-                    "raw_page_text": row[11] or "",
-                    "cached_at": row[12] or "",
-                    "prompt_version": row[13] or "",
+                    "icp_match": bool(row[11]) if row[11] is not None else False,
+                    "agency_type": row[12] or "",
+                    "team_size": row[13] or "",
+                    "size_signal": row[14] or "",
+                    "sales_signal": row[15] or "",
+                    "clutch_presence": bool(row[16]) if row[16] is not None else False,
+                    "target_markets": row[17] or "",
+                    "tech_stack": row[18] or "",
+                    "outreach_score": row[19] or "",
+                    "raw_page_text": row[20] or "",
+                    "cached_at": row[21] or "",
+                    "prompt_version": row[22] or "",
                 }
             finally:
                 conn.close()
@@ -146,8 +175,10 @@ class CompanyCache:
                     """INSERT OR REPLACE INTO company_cache
                     (website, company_name, description, industry, has_product, is_fintech,
                      product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal,
+                     icp_match, agency_type, team_size, size_signal, sales_signal,
+                     clutch_presence, target_markets, tech_stack, outreach_score,
                      raw_page_text, cached_at, prompt_version)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         key,
                         n["company_name"],
@@ -161,6 +192,15 @@ class CompanyCache:
                         n["company_type"],
                         n["geography_detected"],
                         n["revenue_signal"],
+                        1 if n["icp_match"] else 0,
+                        n["agency_type"],
+                        n["team_size"],
+                        n["size_signal"],
+                        n["sales_signal"],
+                        1 if n["clutch_presence"] else 0,
+                        n["target_markets"],
+                        n["tech_stack"],
+                        n["outreach_score"],
                         raw_page_text[:10000] if raw_page_text else "",
                         datetime.now(timezone.utc).isoformat(),
                         prompt_version,
@@ -199,6 +239,8 @@ class CompanyCache:
                 rows = conn.execute(
                     "SELECT website, company_name, description, industry, has_product, is_fintech, "
                     "product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal, "
+                    "icp_match, agency_type, team_size, size_signal, sales_signal, "
+                    "clutch_presence, target_markets, tech_stack, outreach_score, "
                     "raw_page_text, cached_at, prompt_version FROM company_cache"
                 ).fetchall()
                 with open(filepath, "w", newline="", encoding="utf-8") as f:

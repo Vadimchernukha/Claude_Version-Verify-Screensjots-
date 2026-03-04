@@ -73,6 +73,24 @@ def _map_result_to_columns(result: dict, profile: dict) -> dict:
         res["geography_detected"] = _clean(result.get("geography_detected"))
         res["revenue_signal"] = _clean(result.get("revenue_signal"))
         res["reason"] = _clean(result.get("reason"))
+    elif profile["qualify_key"] == "icp_match":
+        def _s(v):
+            if v is None:
+                return ""
+            v = str(v).strip()
+            return "" if v.lower() in ("none", "null") else v
+        res["icp_match"] = result.get("icp_match", False)
+        res["confidence"] = result.get("confidence", "low")
+        res["agency_type"] = _s(result.get("agency_type"))
+        res["team_size"] = _s(result.get("team_size"))
+        res["size_signal"] = _s(result.get("size_signal"))
+        res["sales_signal"] = _s(result.get("sales_signal"))
+        res["clutch_presence"] = result.get("clutch_presence", False)
+        res["target_markets"] = _s(result.get("target_markets"))
+        res["tech_stack"] = _s(result.get("tech_stack"))
+        res["outreach_score"] = _s(result.get("outreach_score"))
+        res["rejection_reason"] = _s(result.get("rejection_reason"))
+        res["reason"] = _s(result.get("reason"))
     else:
         res["has_product"] = result.get("has_product", False)
         res["confidence"] = result.get("confidence", "low")
@@ -106,6 +124,17 @@ def _cache_to_result(cached: dict, profile: dict) -> dict:
         base["company_type"] = cached.get("company_type", "")
         base["geography_detected"] = cached.get("geography_detected", "")
         base["revenue_signal"] = cached.get("revenue_signal", "")
+    elif profile["qualify_key"] == "icp_match":
+        base["icp_match"] = cached.get("icp_match", False)
+        base["agency_type"] = cached.get("agency_type", "")
+        base["team_size"] = cached.get("team_size", "")
+        base["size_signal"] = cached.get("size_signal", "")
+        base["sales_signal"] = cached.get("sales_signal", "")
+        base["clutch_presence"] = cached.get("clutch_presence", False)
+        base["target_markets"] = cached.get("target_markets", "")
+        base["tech_stack"] = cached.get("tech_stack", "")
+        base["outreach_score"] = cached.get("outreach_score", "")
+        base["rejection_reason"] = cached.get("rejection_reason", "")
     else:
         base["has_product"] = cached.get("has_product", False)
         base["product_type"] = cached.get("product_type", "")
@@ -204,7 +233,7 @@ async def _run_async(
     already_done: set[str] = set()
     if existing is not None and "status" in existing.columns and "Website" in existing.columns:
         status_ok = existing["status"].notna() & (existing["status"] != "")
-        unreachable_or_error = status_ok & existing["status"].isin(["unreachable", "error"])
+        unreachable_or_error = status_ok & existing["status"].isin(["unreachable"])
         if qualify_key in existing.columns:
             analyzed_with_result = (
                 status_ok & (existing["status"] == "analyzed")
@@ -305,8 +334,8 @@ async def _run_async(
                     conf = res.get("confidence", "")
                     if qualify_key == "is_fintech":
                         niche = res.get("fintech_niche", "")
-                    elif qualify_key in ("is_icp_match", "is_enterprise_match"):
-                        niche = res.get("company_type", "")
+                    elif qualify_key in ("is_icp_match", "is_enterprise_match", "icp_match"):
+                        niche = res.get("agency_type", "") or res.get("company_type", "")
                     else:
                         niche = res.get("product_type", "")
                     ft_icon = "✅" if is_ok else "❌"

@@ -14,7 +14,7 @@ class Config:
     JINA_API_KEY: str = os.getenv("JINA_API_KEY", "")
 
     MODEL: str = "claude-haiku-4-5"
-    PROFILE: str = "enterprise"
+    PROFILE: str = "ua_it_agency"
     USE_SCREENSHOTS: bool = False
     INPUT_FILE: str = str(PROJECT_DIR / "input.csv")
     OUTPUT_FILE: str = str(PROJECT_DIR / "output.csv")

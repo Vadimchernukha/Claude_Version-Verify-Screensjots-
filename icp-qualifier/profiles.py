@@ -39,6 +39,14 @@ PROFILES = {
         "has_style": False,
         "json_map": {"is_enterprise_match", "company_type", "rejection_reason", "reason"},
     },
+    "ua_it_agency": {
+        "columns": ["status", "icp_match", "confidence", "agency_type", "team_size", "size_signal", "sales_signal", "clutch_presence", "target_markets", "tech_stack", "outreach_score", "rejection_reason", "reason", "analyzed_at"],
+        "columns_with_style": ["status", "icp_match", "confidence", "agency_type", "team_size", "size_signal", "sales_signal", "clutch_presence", "target_markets", "tech_stack", "outreach_score", "rejection_reason", "reason", "analyzed_at"],
+        "qualify_key": "icp_match",
+        "qualify_label": "UA IT agency match",
+        "has_style": False,
+        "json_map": {"icp_match", "agency_type", "team_size", "size_signal", "sales_signal", "clutch_presence", "target_markets", "tech_stack", "outreach_score", "rejection_reason", "reason"},
+    },
 }
 
 
