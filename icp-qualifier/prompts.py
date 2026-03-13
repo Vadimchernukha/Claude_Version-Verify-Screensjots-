@@ -52,7 +52,9 @@ def load_prompt() -> str:
     else:
         template = template.replace("{screenshot_note}", "")
 
-    if config.PROFILE == "fintech":
+    from profiles import get_profile
+    profile = get_profile()
+    if profile.get("has_style"):
         if config.USE_SCREENSHOTS:
             template = template.replace("{style_section}", _STYLE_SECTION)
             template = template.replace("{style_json}", _STYLE_JSON)

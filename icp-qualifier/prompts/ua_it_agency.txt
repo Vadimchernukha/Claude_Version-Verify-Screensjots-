@@ -19,23 +19,19 @@ Target: small-to-mid Ukrainian IT agencies, web studios, and outsource companies
    - No-code / low-code development
    - Digital agency, interactive agency, creative tech studio
 
-2. **Geography signal** — at least one of:
-   - Explicitly mentions Ukraine, Ukrainian cities (Kyiv, Lviv, Kharkiv, Odessa, Dnipro, etc.)
-   - Ukrainian domain (.ua) or Ukrainian phone/address
-   - "Ukrainian team", "based in Ukraine", EU timezone mention with Ukrainian context
-
-3. **Size signal — small to mid (under ~100 people)**:
+2. **Size signal — small to mid (under ~100 people)**:
    - Team size mentioned as < 100 (e.g. "30+ specialists", "50 people team")
    - No mention of "500+ employees", "1000+ team members", offices in 10+ countries
    - Boutique / studio language ("small team", "dedicated team of experts")
    - If size is ambiguous, lean toward qualifying unless clear enterprise signals
 
-4. **Client acquisition signal** — at least one of:
+3. **Client acquisition signal** — at least one of:
    - Mentions Clutch profile, client reviews, awards
    - Mentions Upwork, Toptal, or freelance marketplace presence
    - LinkedIn company page or team visible
    - Has "Contact us", "Get a quote", "Start a project", "Book a call" CTA
    - Mentions partnerships, case studies, or portfolio
+
 
 ---
 

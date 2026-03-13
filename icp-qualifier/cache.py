@@ -17,6 +17,8 @@ CACHE_COLUMNS = [
     "is_icp_match", "company_type", "geography_detected", "revenue_signal",
     "icp_match", "agency_type", "team_size", "size_signal", "sales_signal",
     "clutch_presence", "target_markets", "tech_stack", "outreach_score",
+    "founder_niche", "stage", "audience_signal", "hook", "insight",
+    "location_count", "student_count", "age_groups", "ops_signal", "growth_signal",
     "raw_page_text", "cached_at", "prompt_version",
 ]
 
@@ -65,6 +67,16 @@ def _extract_neutral(data: dict) -> dict:
         "target_markets": str(data.get("target_markets", "")).strip(),
         "tech_stack": str(data.get("tech_stack", "")).strip(),
         "outreach_score": str(data.get("outreach_score", "")).strip(),
+        "founder_niche": str(data.get("founder_niche", "")).strip(),
+        "stage": str(data.get("stage", "")).strip(),
+        "audience_signal": str(data.get("audience_signal", "")).strip(),
+        "hook": str(data.get("hook", "")).strip(),
+        "insight": str(data.get("insight", "")).strip(),
+        "location_count": str(data.get("location_count", "")).strip(),
+        "student_count": str(data.get("student_count", "")).strip(),
+        "age_groups": str(data.get("age_groups", "")).strip(),
+        "ops_signal": str(data.get("ops_signal", "")).strip(),
+        "growth_signal": str(data.get("growth_signal", "")).strip(),
     }
     return out
 
@@ -102,6 +114,10 @@ class CompanyCache:
             ("team_size", "TEXT"), ("size_signal", "TEXT"), ("sales_signal", "TEXT"),
             ("clutch_presence", "INTEGER"), ("target_markets", "TEXT"),
             ("tech_stack", "TEXT"), ("outreach_score", "TEXT"),
+            ("founder_niche", "TEXT"), ("stage", "TEXT"),
+            ("audience_signal", "TEXT"), ("hook", "TEXT"), ("insight", "TEXT"),
+            ("location_count", "TEXT"), ("student_count", "TEXT"),
+            ("age_groups", "TEXT"), ("ops_signal", "TEXT"), ("growth_signal", "TEXT"),
         ]:
             try:
                 conn.execute(f"ALTER TABLE company_cache ADD COLUMN {col} {ctype}")
@@ -121,12 +137,14 @@ class CompanyCache:
                     "product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal, "
                     "icp_match, agency_type, team_size, size_signal, sales_signal, "
                     "clutch_presence, target_markets, tech_stack, outreach_score, "
+                    "founder_niche, stage, audience_signal, hook, insight, "
+                    "location_count, student_count, age_groups, ops_signal, growth_signal, "
                     "raw_page_text, cached_at, prompt_version FROM company_cache WHERE website = ?",
                     (key,),
                 ).fetchone()
                 if not row:
                     return None
-                if row[22] != prompt_version:
+                if row[32] != prompt_version:
                     return None
                 return {
                     "website": key,
@@ -150,9 +168,19 @@ class CompanyCache:
                     "target_markets": row[17] or "",
                     "tech_stack": row[18] or "",
                     "outreach_score": row[19] or "",
-                    "raw_page_text": row[20] or "",
-                    "cached_at": row[21] or "",
-                    "prompt_version": row[22] or "",
+                    "founder_niche": row[20] or "",
+                    "stage": row[21] or "",
+                    "audience_signal": row[22] or "",
+                    "hook": row[23] or "",
+                    "insight": row[24] or "",
+                    "location_count": row[25] or "",
+                    "student_count": row[26] or "",
+                    "age_groups": row[27] or "",
+                    "ops_signal": row[28] or "",
+                    "growth_signal": row[29] or "",
+                    "raw_page_text": row[30] or "",
+                    "cached_at": row[31] or "",
+                    "prompt_version": row[32] or "",
                 }
             finally:
                 conn.close()
@@ -177,8 +205,10 @@ class CompanyCache:
                      product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal,
                      icp_match, agency_type, team_size, size_signal, sales_signal,
                      clutch_presence, target_markets, tech_stack, outreach_score,
+                     founder_niche, stage, audience_signal, hook, insight,
+                     location_count, student_count, age_groups, ops_signal, growth_signal,
                      raw_page_text, cached_at, prompt_version)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         key,
                         n["company_name"],
@@ -201,6 +231,16 @@ class CompanyCache:
                         n["target_markets"],
                         n["tech_stack"],
                         n["outreach_score"],
+                        n["founder_niche"],
+                        n["stage"],
+                        n["audience_signal"],
+                        n["hook"],
+                        n["insight"],
+                        n["location_count"],
+                        n["student_count"],
+                        n["age_groups"],
+                        n["ops_signal"],
+                        n["growth_signal"],
                         raw_page_text[:10000] if raw_page_text else "",
                         datetime.now(timezone.utc).isoformat(),
                         prompt_version,
@@ -241,6 +281,8 @@ class CompanyCache:
                     "product_type, fintech_niche, is_icp_match, company_type, geography_detected, revenue_signal, "
                     "icp_match, agency_type, team_size, size_signal, sales_signal, "
                     "clutch_presence, target_markets, tech_stack, outreach_score, "
+                    "founder_niche, stage, audience_signal, hook, insight, "
+                    "location_count, student_count, age_groups, ops_signal, growth_signal, "
                     "raw_page_text, cached_at, prompt_version FROM company_cache"
                 ).fetchall()
                 with open(filepath, "w", newline="", encoding="utf-8") as f:

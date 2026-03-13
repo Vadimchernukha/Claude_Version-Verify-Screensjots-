@@ -81,16 +81,33 @@ def _map_result_to_columns(result: dict, profile: dict) -> dict:
             return "" if v.lower() in ("none", "null") else v
         res["icp_match"] = result.get("icp_match", False)
         res["confidence"] = result.get("confidence", "low")
-        res["agency_type"] = _s(result.get("agency_type"))
-        res["team_size"] = _s(result.get("team_size"))
-        res["size_signal"] = _s(result.get("size_signal"))
-        res["sales_signal"] = _s(result.get("sales_signal"))
-        res["clutch_presence"] = result.get("clutch_presence", False)
-        res["target_markets"] = _s(result.get("target_markets"))
-        res["tech_stack"] = _s(result.get("tech_stack"))
-        res["outreach_score"] = _s(result.get("outreach_score"))
         res["rejection_reason"] = _s(result.get("rejection_reason"))
         res["reason"] = _s(result.get("reason"))
+        if profile.get("profile_name") == "dance_studios":
+            res["location_count"] = _s(result.get("location_count"))
+            res["student_count"] = _s(result.get("student_count"))
+            res["age_groups"] = _s(result.get("age_groups"))
+            res["ops_signal"] = _s(result.get("ops_signal"))
+            res["growth_signal"] = _s(result.get("growth_signal"))
+            res["hook"] = _s(result.get("hook"))
+        elif profile.get("profile_name") == "echocode":
+            res["founder_niche"] = _s(result.get("founder_niche"))
+            res["stage"] = _s(result.get("stage"))
+            res["audience_signal"] = _s(result.get("audience_signal"))
+            res["hook"] = _s(result.get("hook"))
+            res["insight"] = _s(result.get("insight"))
+            if "website_style" in cols:
+                raw = result.get("website_style", "")
+                res["website_style"] = raw if raw in VALID_STYLES else "Mixed"
+        else:
+            res["agency_type"] = _s(result.get("agency_type"))
+            res["team_size"] = _s(result.get("team_size"))
+            res["size_signal"] = _s(result.get("size_signal"))
+            res["sales_signal"] = _s(result.get("sales_signal"))
+            res["clutch_presence"] = result.get("clutch_presence", False)
+            res["target_markets"] = _s(result.get("target_markets"))
+            res["tech_stack"] = _s(result.get("tech_stack"))
+            res["outreach_score"] = _s(result.get("outreach_score"))
     else:
         res["has_product"] = result.get("has_product", False)
         res["confidence"] = result.get("confidence", "low")
@@ -126,15 +143,30 @@ def _cache_to_result(cached: dict, profile: dict) -> dict:
         base["revenue_signal"] = cached.get("revenue_signal", "")
     elif profile["qualify_key"] == "icp_match":
         base["icp_match"] = cached.get("icp_match", False)
-        base["agency_type"] = cached.get("agency_type", "")
-        base["team_size"] = cached.get("team_size", "")
-        base["size_signal"] = cached.get("size_signal", "")
-        base["sales_signal"] = cached.get("sales_signal", "")
-        base["clutch_presence"] = cached.get("clutch_presence", False)
-        base["target_markets"] = cached.get("target_markets", "")
-        base["tech_stack"] = cached.get("tech_stack", "")
-        base["outreach_score"] = cached.get("outreach_score", "")
         base["rejection_reason"] = cached.get("rejection_reason", "")
+        if profile.get("profile_name") == "dance_studios":
+            base["location_count"] = cached.get("location_count", "")
+            base["student_count"] = cached.get("student_count", "")
+            base["age_groups"] = cached.get("age_groups", "")
+            base["ops_signal"] = cached.get("ops_signal", "")
+            base["growth_signal"] = cached.get("growth_signal", "")
+            base["hook"] = cached.get("hook", "")
+        elif profile.get("profile_name") == "echocode":
+            base["founder_niche"] = cached.get("founder_niche", "")
+            base["stage"] = cached.get("stage", "")
+            base["audience_signal"] = cached.get("audience_signal", "")
+            base["hook"] = cached.get("hook", "")
+            base["insight"] = cached.get("insight", "")
+            base["website_style"] = "Mixed"
+        else:
+            base["agency_type"] = cached.get("agency_type", "")
+            base["team_size"] = cached.get("team_size", "")
+            base["size_signal"] = cached.get("size_signal", "")
+            base["sales_signal"] = cached.get("sales_signal", "")
+            base["clutch_presence"] = cached.get("clutch_presence", False)
+            base["target_markets"] = cached.get("target_markets", "")
+            base["tech_stack"] = cached.get("tech_stack", "")
+            base["outreach_score"] = cached.get("outreach_score", "")
     else:
         base["has_product"] = cached.get("has_product", False)
         base["product_type"] = cached.get("product_type", "")
@@ -334,8 +366,10 @@ async def _run_async(
                     conf = res.get("confidence", "")
                     if qualify_key == "is_fintech":
                         niche = res.get("fintech_niche", "")
-                    elif qualify_key in ("is_icp_match", "is_enterprise_match", "icp_match"):
-                        niche = res.get("agency_type", "") or res.get("company_type", "")
+                    elif qualify_key in ("is_icp_match", "is_enterprise_match"):
+                        niche = res.get("company_type", "")
+                    elif qualify_key == "icp_match":
+                        niche = res.get("agency_type", "") or res.get("founder_niche", "")
                     else:
                         niche = res.get("product_type", "")
                     ft_icon = "✅" if is_ok else "❌"
